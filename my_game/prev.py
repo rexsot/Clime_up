@@ -1,14 +1,21 @@
 from pico2d import *
 
-X_MAX = 1920 # 화면 크기
+# 화면 크기
+X_MAX = 1920 
 Y_MAX = 1080
 
 open_canvas(X_MAX, Y_MAX)
 
-background = load_image('background.png') 
+#이미지
+background = load_image('background.png')
 character = load_image('animation_sheet.png')
 ice = load_image('plat_ice.png')
 iron = load_image('plat_iron.png')
+
+#장애물 - 좌표
+
+pos = []
+
 
 ICE_pos_x = [150, 450, 750, 1770]
 ICE_pos_y = [50, 50, 50, 50]
@@ -17,18 +24,21 @@ IRON_pos_y = [250, 150, 250, 450]
 
 running = True
 
-grounded = 0; #점프 함수
+grounded = 0; #접지 함수
 
-x = 200 # 캐릭터 위치
-y = 150 # 캐릭터 높이
+x = 200 # 캐릭터 x
+y = 150 # 캐릭터 y
 
 vec_x = 0 # x 속도
 vec_y = 0 # y 속도
 vec_y_f = 0 # y 가속도
 
-sel = 1 # 이미지
+sel = 1 # 이미지 방향
 frame = 0  # 이미지 프레임
-jump_timer = 0 #점프 높이 조절용 타이머
+
+press_space = 0 # 스페이스바 키가 눌려있으면 1, 아니면 0
+
+jump_timer = 12
 
 def handle_events():
     global running
@@ -38,9 +48,10 @@ def handle_events():
     global vec_y
     global vec_y_f
     global sel
-    global jump_timer
+    global press_space
     
     events = get_events()
+    
     for event in events:
         if event.type == SDL_QUIT: #창닫기
             running = False
@@ -53,8 +64,11 @@ def handle_events():
             elif event.key == SDLK_LEFT:
                 vec_x -= 1
             if event.key == SDLK_SPACE:
-                vec_y_f = 945
-                jump_timer = 0
+                press_space = 1 #스페이스바가 눌려있을 때
+                if grounded == 0:  #접지중 점프시
+                    vec_y_f = 945
+
+
 
                 
         elif event.type == SDL_KEYUP: #키 땔때
@@ -62,10 +76,13 @@ def handle_events():
                 vec_x -= 1
             elif event.key == SDLK_LEFT:
                 vec_x += 1
-            if event.key == SDLK_SPACE:
-                if (vec_y > 150):
-                    vec_y = 150
-                jump_timer = 13
+            if event.key == SDLK_SPACE: # 스페이스바가 때질 때
+                press_space = 0 
+                if grounded == 1: # 공중일 경우 
+                    if (vec_y > 0): # 상승중일 때 즉시 추락 시작
+                        vec_y = 0 
+                   
+
     
 while running:
     clear_canvas()
@@ -104,10 +121,9 @@ while running:
 
     if y > 150: #중력
         grounded = 1
-        if jump_timer < 12:
+        if vec_y > -405 and press_space == 1: # 추락속도 405이하, 점프키 누르기(감속 하강)
             vec_y_f -= 67.5
-            
-        else:
+        else: #그외
             vec_y_f -= 135
             
 
@@ -115,8 +131,8 @@ while running:
         vec_y = -1440
         vec_y_f = 0
 
-    if vec_y > 1440: #공기저항
-        vec_y_f = -45
+    if vec_y > 1440: #공기저항(상승 종단 속도)
+        vec_y = 1440
 
     if y < 150: #접지
         grounded = 0
@@ -124,10 +140,8 @@ while running:
         vec_y_f = 0
         y = 150
 
-
-    vec_y += vec_y_f # 속도 += 가속도
     y += vec_y * 0.015 #위치 += 속도
-    
+    vec_y += vec_y_f # 속도 += 가속도
     jump_timer += 1
     
     if (0 < x + vec_x * 10 and x + vec_x * 10 < X_MAX):
