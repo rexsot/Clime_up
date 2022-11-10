@@ -31,16 +31,33 @@ class Player:
         # 속도의 방향(vel_x)과 키의 방향(dir_x)이 일치할 때 덜 감속하고, 불일치할 때(방향키가 중립일 때 포함) 더 감속한다.
 
         # 방향, 속도, 접지 여부
+
         if self.dir_x == 0: # 방향키 중립
             if abs(self.vel_x) < 100: # 최소 속도 - 정지
                 self.vel_x = 0
                 self.acc_x = 0
+
             else: # 최소 속도 - 이상
-                if 810 < abs(self.vel_X) and self.midair == 0: # 속도 810 이상, 접지
+                if 810 < abs(self.vel_x) and self.midair == 0: # 속도 810 이상, 접지
                     self.acc_x = self.dir_x * -150.03
-                else:
+                else: # 그외
                     self.acc_x = self.dir_x * -97.47
+
         else: # 방향키 비중립
+            if abs(self.vel_x) < 810: # 속도가 810 미만
+                if 0 < abs(self.vel_x) and 0 < abs(self.dir_x): # 키입력과 속도의 방향이 같을 때 
+                    self.acc_x = self.dir_x * 97.47 # 가속
+                else:
+                    self.acc_x = self.dir_x * -97.47 # 감속
+
+            else: # 속도가 810 이상
+                if 0 < abs(self.vel_x) and 0 < abs(self.dir_x): # 키입력과 속도의 방향이 같을 때
+
+                    self.acc_x = self.dir_x * 97.47 # 감속
+                else:
+                    self.acc_x = self.dir_x * -97.47 # 추가 감속
+
+
 
 
 
