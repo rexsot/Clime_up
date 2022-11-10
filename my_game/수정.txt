@@ -1,0 +1,22 @@
+
+def co:l
+if bot re 1
+if wall re 2
+if top re 3
+re 0
+
+
+dir_x:
+마지막으로 입력한 키(좌입력중 우입력시 좌입력 무시)
+
+if key_down:
+   dir_x += 1 -> dir_x = 1
+
+if key_up right:(수정 필요)
+   dir_x += -1 -> dir_x = 0
+elif key_up left:
+   dir_x += 1 -> dir_x = 0
+
+dir_y 도 dir_x 와 같은 방식
+
+
