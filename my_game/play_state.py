@@ -7,6 +7,21 @@ jump_time = 0
 dash_time = 0
 
 
+def sig(a, b): # 두 수가 같다면 1리턴, 아니라면 -1 리턴
+    if a > 0 and b >= 0:
+        return 1
+    if a < 0 and b <= 0:
+        return 1
+    return -1
+
+
+def vec(a): # 양수면 1, 음수면 -1, 0은 0리턴
+    if a > 0:
+        return 1
+    if a < 0:
+        return -1
+    return 0
+
 class Player:
     def __init__(self):
         self.loc_x, self.loc_y = 200, 150 # 위치
@@ -23,76 +38,48 @@ class Player:
     def update(self):
         self.frame = (self.frame + 1) % 20 # 프레임 계산
 
-        # X 계산
+        if self.dir_x > 0: # 방향 판별 - vel_x로 변경해야함
+            self.face_dir = 1
+        if self.dir_x < 0:
+            self.face_dir = -1
 
         # if (0 < self.loc_x + self.dir_x * 9 and self.loc_x + self.dir_x * 9 < X_MAX): # x좌표 제한
         #     self.loc_x += self.dir_x * 9 # x축 이동
 
         # 속도의 방향(vel_x)과 키의 방향(dir_x)이 일치할 때 덜 감속하고, 불일치할 때(방향키가 중립일 때 포함) 더 감속한다.
 
+        # X 계산
         # 방향, 속도, 접지 여부
 
+        s = sig(self.dir_x, self.vel_x)
+
         if self.dir_x == 0: # 방향키 중립
-            if abs(self.vel_x) < 100: # 최소 속도 - 정지
+            if abs(self.vel_x) <= 97.5: # 최소 속도 - 정지
                 self.vel_x = 0
                 self.acc_x = 0
 
             else: # 최소 속도 - 이상
                 if 810 < abs(self.vel_x) and self.midair == 0: # 속도 810 이상, 접지
-                    self.acc_x = self.dir_x * -150.03
+                    self.acc_x = vec(self.vel_x) * -150
                 else: # 그외
-                    self.acc_x = self.dir_x * -97.47
+                    self.acc_x = vec(self.vel_x) * -97.5
 
         else: # 방향키 비중립
             if abs(self.vel_x) < 810: # 속도가 810 미만
-                if 0 < abs(self.vel_x) and 0 < abs(self.dir_x): # 키입력과 속도의 방향이 같을 때 
-                    self.acc_x = self.dir_x * 97.47 # 가속
-                else:
-                    self.acc_x = self.dir_x * -97.47 # 감속
-
+                self.acc_x = self.dir_x * 97.5
             else: # 속도가 810 이상
-                if 0 < abs(self.vel_x) and 0 < abs(self.dir_x): # 키입력과 속도의 방향이 같을 때
+                if self.midair == 0: # 접지
+                    self.acc_x = vec(self.vel_x) * -(135 - s * 45)  # 이동방향이 같다면 -60, 다르다면 -150
+                else:  # 체공
+                    self.acc_x = vec(self.vel_x) * -(68.75 - s * 28.75)  # 이동방향이 같다면 -40, 다르다면 -97.5
 
-                    self.acc_x = self.dir_x * 97.47 # 감속
-                else:
-                    self.acc_x = self.dir_x * -97.47 # 추가 감속
-
-
-
-
-
-        # if self.vel_x < 810: # 속도 90미만
-        #     if self.dir_x == 1: # 현재 이동방향으로 키입력
-        #         self.acc_x = 97.47
-        #     else: # 반대방향/중립
-        #         if 0 < self.vel_x:
-        #             self.acc_x = -97.47
-        # elif 810 < self.vel_x : # 속도 90이상
-        #     if self.grounded == 0: # 접지
-        #         if self.dir_x == 1: # 현재 이동방향으로 키입력
-        #             self.acc_x = -59.94
-        #         else: # 반대방향/중립
-        #             self.acc_x = -150.03
-        #     else: # 체공
-        #         if self.dir_x == 1: # 현재 이동방향으로 키입력
-        #             self.acc_x = -38.97
-        #         else: # 반대방향/중립
-        #             self.acc_x = -97.47
+                #self.acc_x = vec(self.vel_x) * 97.5 * -s # 이동방향이 같다면 감속, 아니라면 가속
+                #self.acc_x = self.dir_x * -97.5 * s # 추가 감속
 
         self.loc_x += self.vel_x * frame_time  # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
         self.vel_x += self.acc_x  # 프레임당 가속도
 
-
-        # 90 x 60 = 540
-#dir_x가 입력된 방향, face_dir은 마지막으로 입력된 dir_x, vel_x가 x축 속력
-
-        if self.dir_x > 0: # 방향 판별 - vel_x로 변경해야함
-            self.face_dir = 1
-        if self.dir_x < 0:
-            self.face_dir = -1
-
-
-
+        #dir_x가 입력된 방향, face_dir은 마지막으로 입력된 dir_x, vel_x가 x축 속력
 
         # Y 계산
         global press_space
@@ -170,10 +157,6 @@ def handle_events():
                 player.dir_x += 1
             if event.key == SDLK_SPACE: # 스페이스바가 때질 때
                 press_space = 0
-
-
-X_MAX = 1920
-Y_MAX = 1080
 
 player = None
 running = True
