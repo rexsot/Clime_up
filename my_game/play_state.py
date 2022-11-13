@@ -6,7 +6,6 @@ press_space = 0
 jump_time = 0
 dash_time = 0
 
-
 def sig(a, b): # 두 수가 같다면 1리턴, 아니라면 -1 리턴
     if a > 0 and b >= 0:
         return 1
@@ -21,6 +20,8 @@ def vec(a): # 양수면 1, 음수면 -1, 0은 0리턴
     if a < 0:
         return -1
     return 0
+
+
 
 class Player:
     def __init__(self):
@@ -112,8 +113,6 @@ class Player:
                 self.acc_y = -67.5 #중력 반감
             else:
                 self.acc_y = -135 # 기본중력
-
-
 
     def draw(self): # 캐릭터 모션 출력
         if self.midair == 0:  # 접지시
