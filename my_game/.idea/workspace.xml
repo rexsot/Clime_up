@@ -7,7 +7,6 @@
     <list default="true" id="d0b434a9-801f-43c2-ac68-979261b8313b" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/play_state.py" beforeDir="false" afterPath="$PROJECT_DIR$/play_state.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/수정.txt" beforeDir="false" afterPath="$PROJECT_DIR$/수정.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,7 +29,7 @@
   "keyToString": {
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/dublins/Documents/GitHub/2021182023_2DGP_DRILL/참고용",
+    "last_opened_file_path": "G:/Git_My_Work/2DGP/Labs/Lecture12_Game_World",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>

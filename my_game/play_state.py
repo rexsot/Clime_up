@@ -2,8 +2,6 @@ from pico2d import *
 import game_framework
 
 frame_time = 0.013
-press_space = 0
-jump_time = 0
 dash_time = 0
 
 def sig(a, b): # 두 수가 같다면 1리턴, 아니라면 -1 리턴
@@ -29,6 +27,7 @@ class Player:
         self.vel_x, self.vel_y = 0, 0 # 속도
         self.acc_x, self.acc_y = 0, 0 # 가속도
         self.dir_x, self.dir_y = 0, 0  # 방향키의 방향
+        self.press_space, self.jump_time = 0, 0
 
         self.face_dir = 1 # 보고 있는 방향 - 좌 = -1, 우 = 1
         self.midair = 0 # 0일때 접지, 1일때 체공
@@ -83,8 +82,6 @@ class Player:
         #dir_x가 입력된 방향, face_dir은 마지막으로 입력된 dir_x, vel_x가 x축 속력
 
         # Y 계산
-        global press_space
-        global jump_time
 
         if self.vel_y > 945: # 상승 종단속도
             self.vel_y = 945
@@ -103,13 +100,13 @@ class Player:
             self.acc_y = 0
             self.midair = 0
 
-        if jump_time < 12 and press_space == 1: #점프 직후 점프키 홀딩시, 12프레임까지 가속도 감소 없음
-            jump_time += 1
+        if self.jump_time < 12 and self.press_space == 1: #점프 직후 점프키 홀딩시, 12프레임까지 가속도 감소 없음
+            self.jump_time += 1
             #print(jump_time)
             self.acc_y = 0
 
         elif self.midair == 1: #체공시
-            if -405 < self.vel_y < 405 and press_space == 1: # 최고점 근처에서 점프키 홀딩(감속 하강)
+            if -405 < self.vel_y < 405 and self.press_space == 1: # 최고점 근처에서 점프키 홀딩(감속 하강)
                 self.acc_y = -67.5 #중력 반감
             else:
                 self.acc_y = -135 # 기본중력
@@ -125,9 +122,6 @@ class Player:
 
 
 def handle_events():
-    global running
-    global press_space
-    global jump_time
 
     events = get_events()
     for event in events:
@@ -143,9 +137,9 @@ def handle_events():
             if event.key == SDLK_LEFT:  # 좌
                 player.dir_x -= 1
             if event.key == SDLK_SPACE: # 스페이스 바 입력
-                press_space = 1
+                player.press_space = 1
                 if player.midair == 0:  #접지중 점프시
-                    jump_time = 0
+                    player.jump_time = 0
                     player.acc_y = 945
                     #player.vel_x += player.dir_x * 360 # 이동하며 점프시 40(360)의 가속을 받는다.
 
@@ -155,7 +149,7 @@ def handle_events():
             elif event.key == SDLK_LEFT:
                 player.dir_x += 1
             if event.key == SDLK_SPACE: # 스페이스바가 때질 때
-                press_space = 0
+                player.press_space = 0
 
 player = None
 running = True
