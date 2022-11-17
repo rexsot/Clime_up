@@ -33,6 +33,7 @@ class IDLE:
     @staticmethod
     def draw(self):
         if self.face_dir == 1:
+
             self.image.clip_draw(self.frame * 100, 300, 100, 100, self.loc_x, self.loc_y)
         else:
             self.image.clip_draw(self.frame * 100, 200, 100, 100, self.loc_x, self.loc_y)
@@ -60,10 +61,7 @@ class RUN:
         self.loc_x = clamp(0, self.loc_x, 800)
 
     def draw(self):
-        if self.dir == -1:
-            self.image.clip_draw(self.frame*100, 0, 100, 100, self.loc_x, self.loc_y)
-        elif self.dir == 1:
-            self.image.clip_draw(self.frame*100, 100, 100, 100, self.loc_x, self.loc_y)
+        self.image.clip_draw(self.frame * 92, 50 + self.face_dir * 50, 92, 100, self.loc_x, self.loc_y)
 
 
 class SLEEP:
@@ -98,16 +96,19 @@ next_state = {
 class Boy:
 
     def __init__(self):
+        self.midair = 0  # 0일때 접지, 1일때 체공
+        self.frame = 0  # 프레임 수
+
         self.loc_x, self.loc_y = 800 // 2, 90
         #self.vel_x, self.vel_y = 0, 0  # 속도
         #self.acc_x, self.acc_y = 0, 0  # 가속도
         #self.dir_x, self.dir_y = 0, 0  # 방향키의 방향
+        self.press_space, self.jump_time = 0, 0
 
-        #self.face_dir = 1  # 보고 있는 방향 - 좌 = -1, 우 = 1
+        self.face_dir = 1  # 보고 있는 방향 - 좌 = -1, 우 = 1
         #self.midair = 0  # 0일때 접지, 1일때 체공
 
-        self.frame = 0
-        self.dir, self.face_dir = 0, 1
+        self.dir = 0
 
         self.image = load_image('animation_sheet.png')
 
