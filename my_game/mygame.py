@@ -1,5 +1,4 @@
 import pico2d
-
 import game_framework
 import play_state
 #import play_state
@@ -9,10 +8,9 @@ import play_state
 #Y_MAX = 1080
 
 
-X_MAX = 910
-Y_MAX = 540
+game_framework.X_MAX = 910
+game_framework.Y_MAX = 540
 
-
-pico2d.open_canvas(X_MAX, Y_MAX)
+pico2d.open_canvas(game_framework.X_MAX, game_framework.Y_MAX)
 game_framework.run(play_state) #logo_state
 pico2d.close_canvas()
