@@ -140,7 +140,7 @@ def handle_events():
                 if player.midair == 0:  #접지중 점프시
                     player.jump_time = 0
                     player.acc_y = 945
-                    #player.vel_x += player.dir_x * 360 # 이동하며 점프시 40(360)의 가속을 받는다.
+                    player.vel_x += player.dir_x * 360 # 이동하며 점프시 40(360)의 가속을 받는다.
 
         elif event.type == SDL_KEYUP: #키 땔때
             if event.key == SDLK_RIGHT:

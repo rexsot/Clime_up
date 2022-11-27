@@ -7,7 +7,6 @@ import play_state
 #X_MAX = 1920
 #Y_MAX = 1080
 
-
 game_framework.X_MAX = 910
 game_framework.Y_MAX = 540
 
