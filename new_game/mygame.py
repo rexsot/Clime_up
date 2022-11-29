@@ -1,7 +1,7 @@
 import pico2d
 import game_framework
+import play_state2
 import play_state
-#import play_state
 #import item_state
 
 #X_MAX = 1920
