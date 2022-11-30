@@ -3,6 +3,9 @@ import game_framework
 
 from player import Player
 
+frame_time = 0.013
+
+
 player = None
 #grass = None
 
@@ -30,6 +33,7 @@ def exit():
     #del grass
 
 def update():
+    delay(frame_time)
     player.update()
 
 def draw_world():

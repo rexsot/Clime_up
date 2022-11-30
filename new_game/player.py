@@ -1,11 +1,7 @@
 import game_framework
 from pico2d import *
 
-# key_up/down - 상하좌우 및 스페이스(점프)
-# key_down - 대시(x)
-
-
-#tick = 0.75
+frame_time = 0.014
 
 def sig(a, b): # 두 수의 부호 같다면 1리턴, 아니라면 -1 리턴
     if a > 0 and b >= 0:
@@ -21,10 +17,11 @@ def vec(a): # 양수면 1, 음수면 -1, 0은 0리턴
         return -1
     return 0
 
-# KD = KEY_DOWN, KU = KEY_UP
-# 1. 이벤트 정의
+# 1. 이벤트 정의 - KD = KEY_DOWN, KU = KEY_UP
+
 RIGHT_KD, LEFT_KD, UP_KD, DOWN_KD, X_KD, SPACE_KD,\
-RIGHT_KU, LEFT_KU, UP_KU, DOWN_KU, SPACE_KU, TIMER = range(12)
+RIGHT_KU, LEFT_KU, UP_KU, DOWN_KU, SPACE_KU, ENTER_DASH, DASH_TIMER = range(13)
+
 # DASH_TIMER, COLL_TIMER, DIE_TIMER - 대시 시간, 대시 충돌 시간, 사망시간
 # DASH_TIMER: DASH_STATE -> MOVE_STATE
 # COLL_TIMER: DASH_STATE -> DASH_COLL_STATE
@@ -51,7 +48,6 @@ key_event_table = {
 
 class MOVE_STATE:
 
-    @staticmethod
     def enter(player, event):
         if event == RIGHT_KD: # 우 입력
             player.dir_x += 1
@@ -84,15 +80,16 @@ class MOVE_STATE:
             player.press_space = 0
             player.jump_time = 30
 
+        if player.dash.count > 0: # 대시 가능할 때
+            if event == X_KD: # 대시 입력
+                player.dash.count -= 1
+                player.add_event(ENTER_DASH)
 
-    @staticmethod
     def exit(player, event):
         pass
 
-    @staticmethod
     def do(player):
         player.frame = (player.frame + 1) % 20  # 프레임 계산
-        #print(game_framework.frame_time)
 
         # 보는 방향 판별
         if player.dir_x > 0:
@@ -136,19 +133,17 @@ class MOVE_STATE:
                 # player.acc_x = vec(player.vel_x) * 97.5 * -s # 이동방향이 같다면 감속, 아니라면 가속
                 # player.acc_x = player.dir_x * -97.5 * s # 추가 감속
 
+        # if game_framework.frame_time == 0:
+        #     tick = 1
+        # else:
+        #     tick = (1/game_framework.frame_time) / 60
 
-        if game_framework.frame_time == 0:
-            tick = 1
-        else:
-            tick = (1/game_framework.frame_time) / 60
-            print(1.0 / game_framework.frame_time)
-            #print(tick)
         # 60 프레임 기준으로 만든 코드를 변동 프레임 기준으로 바꾸어야 한다
         # 속도 및 가속도 둘 다 변경할 것.
-        #
 
+        #print(game_framework.frame_rate)
 
-        player.loc_x += player.vel_x * game_framework.frame_time # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
+        player.loc_x += player.vel_x * frame_time # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
         player.vel_x += player.acc_x # 프레임당 가속도
 
         # ===== Y 계산 =====
@@ -159,8 +154,8 @@ class MOVE_STATE:
         if player.vel_y < -1440:  # 하강 종단속도
             player.vel_y = -1440
 
-        player.loc_y += player.vel_y * tick * game_framework.frame_time   # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
-        player.vel_y += player.acc_y #* tick  # 프레임당 가속도
+        player.loc_y += player.vel_y * frame_time #tick * game_framework.frame_time   # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
+        player.vel_y += player.acc_y #60 * game_framework.frame_time#* tick  # 프레임당 가속도
 
         # 60 기준으로 만들어진 코드. 300프레임일 때 5배를 곱해야 한다.
         # ? 그럼 어케함?
@@ -176,8 +171,9 @@ class MOVE_STATE:
             player.acc_y = 0
             player.midair = 0
 
-        if player.jump_time < 12 and player.press_space == 1:  # 점프 직후 점프키 홀딩시, 12프레임까지 가속도 감소 없음
-            player.jump_time += 1
+        if player.jump_time < 12 and player.press_space == 1:  # 점프 직후 점프키 홀딩시, 12프레임까지 가속도 감소 없음 < 0.2
+            player.jump_time += 1 #game_framework.frame_time
+            #player.jump_time += 1
             # print(jump_time)
             player.acc_y = 0
 
@@ -190,7 +186,6 @@ class MOVE_STATE:
         # if (abs(player.acc_y)) > 0:
         #     print(player.acc_y)
 
-    @staticmethod
     def draw(player):
         if player.midair == 0:  # 접지시
             if player.dir_x == 0:  # 접지-정지
@@ -205,21 +200,18 @@ class MOVE_STATE:
 
 # 대시 상태
 class DASH_STATE:
-    @staticmethod
     def enter(player, event):
+
         pass
 
-    @staticmethod
     def exit(player, event):
         pass
 
-    @staticmethod
     def do(player):
         pass
 
-    @staticmethod
     def draw(player):
-        pass
+        player.image.clip_draw(240 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
 
 # 대시 충돌 상태
 #class DASH_COL_STATE:
@@ -227,6 +219,7 @@ class DASH_STATE:
 # 사망
 #class DIE_STATE
 
+# 조건부로 진입해야함. lec12 boy파일의 timer를 응용해서 구현해보자
 next_state_table = {
     MOVE_STATE:  {
         RIGHT_KD: MOVE_STATE,  LEFT_KD: MOVE_STATE,  UP_KD: MOVE_STATE,  DOWN_KD: MOVE_STATE, SPACE_KD: MOVE_STATE,
@@ -236,7 +229,7 @@ next_state_table = {
     DASH_STATE:   {
         RIGHT_KD: DASH_STATE,  LEFT_KD: DASH_STATE,  UP_KD: DASH_STATE,  DOWN_KD: DASH_STATE, SPACE_KD: DASH_STATE,
         RIGHT_KU: DASH_STATE,  LEFT_KU: DASH_STATE,  UP_KU: MOVE_STATE,  DOWN_KU: DASH_STATE, SPACE_KU: DASH_STATE,
-        TIMER: MOVE_STATE}
+        DASH_TIMER: MOVE_STATE}
 }
 
 class Player:
@@ -264,8 +257,10 @@ class Player:
         self.event_que = []
         self.cur_state = MOVE_STATE # 현재 상태
         self.cur_state.enter(self, None)
-        self.timer = 1000
-        self.hp = 0
+        self.timer = 1000 # 타이머
+        self.dash_max = 1  # 연속으로 대시 가능한 횟수
+        self.dash_count = 0 # 현재 남은 대시 가능한 횟수
+
 
     def get_bb(self):
         # fill here
@@ -287,7 +282,7 @@ class Player:
 
     def draw(self):
         self.cur_state.draw(self)
-        self.font.draw(self.loc_x - 60, self.loc_y + 50, '%5d' % self.hp, (255, 255, 0))
+        self.font.draw(self.loc_x - 60, self.loc_y + 50, '%5d' % self.dash_count, (255, 255, 0))
         draw_rectangle(*self.get_bb())
 
     def handle_event(self, event):
@@ -297,5 +292,5 @@ class Player:
 
 
     # def handle_collision(self, other, group):
-    #     if 'player:ball' == group:
-    #         self.hp += 100
+    #     if 'player:cristal' == group:
+    #         self.dash_count = self.dash_max

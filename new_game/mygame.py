@@ -11,5 +11,5 @@ game_framework.X_MAX = 910
 game_framework.Y_MAX = 540
 
 pico2d.open_canvas(game_framework.X_MAX, game_framework.Y_MAX)
-game_framework.run(play_state) #logo_state
+game_framework.run(play_state2) #logo_state
 pico2d.close_canvas()
