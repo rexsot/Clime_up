@@ -60,9 +60,9 @@ class MOVE_STATE:
             player.dir_x += 1
 
         if event == UP_KD: # 상 입력
-            player.y_vel += 1
+            player.dir_y += 1
         elif event == UP_KU: # 상 해제
-            player.y_vel -= 1
+            player.dir_y -= 1
 
         if event == DOWN_KD: # 하 입력
             player.dir_y -= 1
@@ -80,7 +80,7 @@ class MOVE_STATE:
             player.press_space = 0
             player.jump_time = 30
 
-        if player.dash.count > 0: # 대시 가능할 때
+        if player.dash_count > 0: # 대시 가능할 때
             if event == X_KD: # 대시 입력
                 player.dash.count -= 1
                 player.add_event(ENTER_DASH)
@@ -193,7 +193,7 @@ class MOVE_STATE:
             else:  # 접지-이동
                 player.image.clip_draw(player.frame * 92, 50 + player.face_dir * 50, 92, 100, player.loc_x, player.loc_y)
         else:  # 체공
-            player.image.clip_draw(240 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
+            player.image.clip_draw(230 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
 
 
 
@@ -211,7 +211,9 @@ class DASH_STATE:
         pass
 
     def draw(player):
-        player.image.clip_draw(240 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
+        player.image.clip_draw(230 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
+        #player.image.clip_draw(414 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
+
 
 # 대시 충돌 상태
 #class DASH_COL_STATE:
@@ -249,6 +251,8 @@ class Player:
         self.face_dir = 1 # 보고 있는 방향(좌 = -1, 우 = 1)
         self.midair = 0 # 접지 = 0, 체공 = 1
         self.frame = 0 # 현재 프레임 수
+        self.dash_max = 1  # 연속으로 대시 가능한 횟수
+        self.dash_count = 0  # 현재 남은 대시 가능한 횟수
 
 
         self.image = load_image('image/animation_sheet.png') # 이미지
@@ -258,13 +262,12 @@ class Player:
         self.cur_state = MOVE_STATE # 현재 상태
         self.cur_state.enter(self, None)
         self.timer = 1000 # 타이머
-        self.dash_max = 1  # 연속으로 대시 가능한 횟수
-        self.dash_count = 0 # 현재 남은 대시 가능한 횟수
+
 
 
     def get_bb(self):
         # fill here
-        return self.loc_x - 50, self.loc_y - 50, self.loc_x + 50, self.loc_y + 50
+        return self.loc_x - 30, self.loc_y - 50, self.loc_x + 30, self.loc_y + 40
 
 
     def add_event(self, event):
