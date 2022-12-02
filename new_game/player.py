@@ -212,7 +212,8 @@ class DASH_STATE:
 
     def draw(player):
         player.image.clip_draw(230 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
-        #player.image.clip_draw(414 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
+        #player.image.clip_draw(414 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y) # dash_effect
+        #player.image.clip_draw(598 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y) # dead
 
 
 # 대시 충돌 상태
