@@ -1,4 +1,4 @@
-import game_framework
+#import game_framework
 from pico2d import *
 
 frame_time = 0.014
@@ -17,13 +17,17 @@ def vec(a): # 양수면 1, 음수면 -1, 0은 0리턴
         return -1
     return 0
 
+def dir_judg(x, y): # 대시가 대각인지 아닌지 판별
+    return abs(x) + abs(y)
+
+
 # 1. 이벤트 정의 - KD = KEY_DOWN, KU = KEY_UP
 
-RIGHT_KD, LEFT_KD, UP_KD, DOWN_KD, X_KD, SPACE_KD,\
-RIGHT_KU, LEFT_KU, UP_KU, DOWN_KU, SPACE_KU, ENTER_DASH, DASH_TIMER = range(13)
+RIGHT_KD, LEFT_KD, UP_KD, DOWN_KD, X_KD, SPACE_KD, \
+RIGHT_KU, LEFT_KU, UP_KU, DOWN_KU, SPACE_KU, ENTER_DASH, ENTER_MOVE = range(13)
 
-# DASH_TIMER, COLL_TIMER, DIE_TIMER - 대시 시간, 대시 충돌 시간, 사망시간
-# DASH_TIMER: DASH_STATE -> MOVE_STATE
+# ENTER_MOVE, COLL_TIMER, DIE_TIMER - 대시 시간, 대시 충돌 시간, 사망시간
+# ENTER_MOVE: DASH_STATE -> MOVE_STATE
 # COLL_TIMER: DASH_STATE -> DASH_COLL_STATE
 # DIE_TIMER: MOVE_STATE/DASH_STATE -> DIE_STATE
 
@@ -46,6 +50,7 @@ key_event_table = {
     (SDL_KEYUP, SDLK_SPACE): SPACE_KU
 }
 
+# 기본 상태
 class MOVE_STATE:
 
     def enter(player, event):
@@ -80,10 +85,47 @@ class MOVE_STATE:
             player.press_space = 0
             player.jump_time = 30
 
-        if player.dash_count > 0: # 대시 가능할 때
+
+        if player.dash_count > 0: # 대시 가능할 때 - 방향키 입력 문제로 이곳에서 실질적인 enter을 담당한다.
+
             if event == X_KD: # 대시 입력
-                player.dash.count -= 1
-                player.add_event(ENTER_DASH)
+                delay(3 * frame_time) # 대시 딜레이(게임 정지)
+
+                events = get_events()
+                for event in events: # 키값을 다시 받는다.(조작감 향상)
+                    if event.type == SDL_KEYDOWN:  # 키 누를때
+                        if event.key == SDLK_UP:  # 상
+                            player.dir_y += 1
+                        if event.key == SDLK_DOWN:  # 하
+                            player.dir_y -= 1
+                        if event.key == SDLK_LEFT:  # 좌
+                            player.dir_x -= 1
+                        if event.key == SDLK_RIGHT:  # 우
+                            player.dir_x += 1
+                    elif event.type == SDL_KEYUP:  # 키 땔때
+                        if event.key == SDLK_UP:  # 상
+                            player.dir_y -= 1
+                        if event.key == SDLK_DOWN:  # 하
+                            player.dir_y += 1
+                        if event.key == SDLK_LEFT:  # 좌
+                            player.dir_x += 1
+                        if event.key == SDLK_RIGHT:  # 우
+                            player.dir_x -= 1
+
+                player.dash_dir_x = player.dir_x  # 현재 입력된 X축 대시 방향 받기
+                player.dash_dir_y = player.dir_y  # 현재 입력된 Y축 대시 방향 받기
+
+                if dir_judg(player.dir_x, player.dir_y) == 0: # 키 중립 대시
+                    player.dash_dir_x = player.face_dir # 기본값 - 바라보는 방향
+                    player.dash_dir_a = 1 # 직선
+                else: # 직선 및 대각
+                    player.dash_dir_a = dir_judg(player.dir_x, player.dir_y)
+
+                player.jump_time = 30 # 점프 감속 효과 삭제
+                player.dash_count -= 1 # 대시 가능 횟수 차감
+                player.sound_dash.play(1) # 대시 소리 출력
+                player.dash_timer = 0 # 대시 타이머 초기화
+                player.add_event(ENTER_DASH) # 대시 상태 진입
 
     def exit(player, event):
         pass
@@ -130,18 +172,6 @@ class MOVE_STATE:
                 else:  # 체공
                     player.acc_x = vec(player.vel_x) * -(68.75 - s * 28.75)  # 이동방향이 같다면 -40, 다르다면 -97.5
 
-                # player.acc_x = vec(player.vel_x) * 97.5 * -s # 이동방향이 같다면 감속, 아니라면 가속
-                # player.acc_x = player.dir_x * -97.5 * s # 추가 감속
-
-        # if game_framework.frame_time == 0:
-        #     tick = 1
-        # else:
-        #     tick = (1/game_framework.frame_time) / 60
-
-        # 60 프레임 기준으로 만든 코드를 변동 프레임 기준으로 바꾸어야 한다
-        # 속도 및 가속도 둘 다 변경할 것.
-
-        #print(game_framework.frame_rate)
 
         player.loc_x += player.vel_x * frame_time # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
         player.vel_x += player.acc_x # 프레임당 가속도
@@ -170,6 +200,7 @@ class MOVE_STATE:
             player.vel_y = 0
             player.acc_y = 0
             player.midair = 0
+            player.dash_count = player.dash_max  # 대시 충전
 
         if player.jump_time < 12 and player.press_space == 1:  # 점프 직후 점프키 홀딩시, 12프레임까지 가속도 감소 없음 < 0.2
             player.jump_time += 1 #game_framework.frame_time
@@ -183,8 +214,6 @@ class MOVE_STATE:
             else:
                 player.acc_y = -135  # 기본중력
 
-        # if (abs(player.acc_y)) > 0:
-        #     print(player.acc_y)
 
     def draw(player):
         if player.midair == 0:  # 접지시
@@ -195,31 +224,75 @@ class MOVE_STATE:
         else:  # 체공
             player.image.clip_draw(230 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
 
-
-
-
 # 대시 상태
 class DASH_STATE:
     def enter(player, event):
+        if event == RIGHT_KD: # 우 입력
+            player.dir_x += 1
+        elif event == RIGHT_KU: # 우 해제
+            player.dir_x -= 1
 
-        pass
+        if event == LEFT_KD: # 좌 입력
+            player.dir_x -= 1
+        elif event == LEFT_KU: # 좌 해제
+            player.dir_x += 1
+
+        if event == UP_KD: # 상 입력
+            player.dir_y += 1
+        elif event == UP_KU: # 상 해제
+            player.dir_y -= 1
+
+        if event == DOWN_KD: # 하 입력
+            player.dir_y -= 1
+        elif event == DOWN_KU: # 하 해제
+            player.dir_y += 1
+
+        if event == SPACE_KD: # 점프 입력
+            player.press_space = 1
+
+        elif event == SPACE_KU: # 점프 해제
+            player.press_space = 0
+            player.jump_time = 30
 
     def exit(player, event):
         pass
 
     def do(player):
-        pass
+        # player.dash_dir_a가 0일 때 중립, 1일 때 직선, 2일때 대각으로 대시한다.
+        if player.dash_dir_a == 2: # 대각 방향 대시
+            # 원래라면 MOVE_STATE에서 이동 계산식에 frame_time을 곱하지만, DASH_STATE에서는 없으므로 따로 곱해준다.
+            player.loc_x += player.dash_dir_x * 1530 * frame_time
+            player.loc_y += player.dash_dir_y * 1530 * frame_time
+        else: # 중립, 직선 방향 대시
+            player.loc_x += player.dash_dir_x * 2160 * frame_time
+            player.loc_y += player.dash_dir_y * 2160 * frame_time
+
+
+        player.dash_timer += 1 # 대시 시간
+        if player.dash_timer == 10: # 방향키 입력 및 속력 관련 문제로 이곳에서 실질적인 exit를 담당한다.
+
+            if player.dash_dir_a == 2:  # 대각 방향 대시
+                # MOVE_STATE에서 이동 계산식에 frame_time을 곱하기 때문에 이곳에서는 곱할 필요가 없다.
+                player.vel_x = player.dash_dir_x * 1080
+                player.vel_y = player.dash_dir_y * 1080
+            else:  # 중립, 직선 방향 대시
+                player.vel_x = player.dash_dir_x * 1440
+                player.vel_y = player.dash_dir_y * 1440
+
+            if player.vel_y > 0: # y축 대시 방향이 양수일 경우
+                player.vel_y *= 0.75 # y축 속도 75%
+
+            player.add_event(ENTER_MOVE) # 대시 상태 종료
 
     def draw(player):
         player.image.clip_draw(230 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
         #player.image.clip_draw(414 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y) # dash_effect
         #player.image.clip_draw(598 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y) # dead
 
-
 # 대시 충돌 상태
 #class DASH_COL_STATE:
 
-# 사망
+# 사망 상태
 #class DIE_STATE
 
 # 조건부로 진입해야함. lec12 boy파일의 timer를 응용해서 구현해보자
@@ -227,48 +300,67 @@ next_state_table = {
     MOVE_STATE:  {
         RIGHT_KD: MOVE_STATE,  LEFT_KD: MOVE_STATE,  UP_KD: MOVE_STATE,  DOWN_KD: MOVE_STATE, SPACE_KD: MOVE_STATE,
         RIGHT_KU: MOVE_STATE,  LEFT_KU: MOVE_STATE,  UP_KU: MOVE_STATE,  DOWN_KU: MOVE_STATE, SPACE_KU: MOVE_STATE,
-        X_KD: DASH_STATE
+        X_KD: MOVE_STATE, ENTER_DASH: DASH_STATE
         },
     DASH_STATE:   {
         RIGHT_KD: DASH_STATE,  LEFT_KD: DASH_STATE,  UP_KD: DASH_STATE,  DOWN_KD: DASH_STATE, SPACE_KD: DASH_STATE,
-        RIGHT_KU: DASH_STATE,  LEFT_KU: DASH_STATE,  UP_KU: MOVE_STATE,  DOWN_KU: DASH_STATE, SPACE_KU: DASH_STATE,
-        DASH_TIMER: MOVE_STATE}
+        RIGHT_KU: DASH_STATE,  LEFT_KU: DASH_STATE,  UP_KU: DASH_STATE,  DOWN_KU: DASH_STATE, SPACE_KU: DASH_STATE,
+        X_KD: DASH_STATE, ENTER_MOVE: MOVE_STATE}
 }
 
 class Player:
 
     def __init__(self):
-        #self.x, self.y = 1280 // 2, 1024 // 2
-        #self.dir = 1
-        #self.x_vel, self.y_vel = 0, 0
-        #self.frame = 0
-        
+        # 기초 함수
+
+        # 운동 함수
         self.loc_x, self.loc_y = 200, 150 # x,y 위치
         self.vel_x, self.vel_y = 0, 0 # x,y 속도
         self.acc_x, self.acc_y = 0, 0 # x,y 가속도
-        self.dir_x, self.dir_y = 0, 0  # x,y 방향키의 방향
-        self.press_space, self.jump_time = 0, 0 # 스페이스 바 눌림, 점프 시간
 
+        # 대시 함수
+        self.dash_max = 1  # 연속으로 대시 가능한 횟수
+        self.dash_count = self.dash_max  # 현재 남은 대시 가능한 횟수
+        self.dash_dir_a = 0 # 대시 방향 - 0일 때 중립, 1일 때 직선, 2일때 대각
+        self.dash_dir_x = 0 # X축 대시 방향
+        self.dash_dir_y = 0 # Y축 대시 방향
+
+        # 키입력 함수
+        self.press_space = 0 # 스페이스 바 눌림
+        self.dir_x, self.dir_y = 0, 0  # x,y 방향키의 입력 방향
+
+        # 상태 함수
         self.face_dir = 1 # 보고 있는 방향(좌 = -1, 우 = 1)
         self.midair = 0 # 접지 = 0, 체공 = 1
-        self.frame = 0 # 현재 프레임 수
-        self.dash_max = 1  # 연속으로 대시 가능한 횟수
-        self.dash_count = 0  # 현재 남은 대시 가능한 횟수
+        self.frame = 0  # 현재 프레임 수
 
+        # 시간 함수
+        self.dash_timer = 0 # 대시 시간
+        self.jump_time = 0 # 점프 시간
+        self.timer = 1000  # 타이머
 
-        self.image = load_image('image/animation_sheet.png') # 이미지
-        self.font = load_font('font/ENCR10B.TTF', 16) # 폰트
+        # 이미지
+        self.image = load_image('image/animation_sheet.png')
 
+        # 폰트
+        self.font = load_font('font/ENCR10B.TTF', 25)
+
+        # 효과음
+        self.sound_dash = load_wav('sound/player_dash.wav')
+        self.sound_die = load_wav('sound/player_die.wav')
+
+        self.sound_dash.set_volume(32)
+        self.sound_die.set_volume(32)
+
+        # 이벤트 함수
         self.event_que = []
         self.cur_state = MOVE_STATE # 현재 상태
         self.cur_state.enter(self, None)
-        self.timer = 1000 # 타이머
-
 
 
     def get_bb(self):
         # fill here
-        return self.loc_x - 30, self.loc_y - 50, self.loc_x + 30, self.loc_y + 40
+        return self.loc_x - 30, self.loc_y - 50, self.loc_x + 30, self.loc_y + 40 # 60, 90 원본 - 8, 11
 
 
     def add_event(self, event):
@@ -286,7 +378,7 @@ class Player:
 
     def draw(self):
         self.cur_state.draw(self)
-        self.font.draw(self.loc_x - 60, self.loc_y + 50, '%5d' % self.dash_count, (255, 255, 0))
+        self.font.draw(self.loc_x - 90, self.loc_y + 55, '%5d' % self.dash_count, (255, 255, 255)) # 남은 대시수 표기(항상)
         draw_rectangle(*self.get_bb())
 
     def handle_event(self, event):

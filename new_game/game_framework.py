@@ -1,5 +1,5 @@
-X_MAX = 910
-Y_MAX = 540
+X_MAX = 1920
+Y_MAX = 1080
 
 class GameState:
     def __init__(self, state):
