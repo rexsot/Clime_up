@@ -4,7 +4,7 @@ import play_state
 
 #import item_state
 
-#game_framework.X_MAX = 910
+#game_framework.X_MAX = 960
 #game_framework.Y_MAX = 540
 
 pico2d.open_canvas(game_framework.X_MAX, game_framework.Y_MAX)

@@ -1,5 +1,7 @@
 #import game_framework
 from pico2d import *
+import game_world
+from dash_effect import Dash_effect
 
 frame_time = 0.014
 
@@ -258,6 +260,7 @@ class DASH_STATE:
         pass
 
     def do(player):
+        player.make_dash_effect()
         # player.dash_dir_a가 0일 때 중립, 1일 때 직선, 2일때 대각으로 대시한다.
         if player.dash_dir_a == 2: # 대각 방향 대시
             # 원래라면 MOVE_STATE에서 이동 계산식에 frame_time을 곱하지만, DASH_STATE에서는 없으므로 따로 곱해준다.
@@ -386,7 +389,11 @@ class Player:
             key_event = key_event_table[(event.type, event.key)]
             self.add_event(key_event)
 
+    def make_dash_effect(self): # 대시 이펙트 만들기
+        dash_effect = Dash_effect(self.loc_x, self.loc_y, self.face_dir)
+        game_world.add_object(dash_effect, 0) # 뒤에 생성
 
-    # def handle_collision(self, other, group):
-    #     if 'player:cristal' == group:
-    #         self.dash_count = self.dash_max
+
+    def handle_collision(self, other, group):
+        if 'player:gem_full' == group:
+            self.dash_count = self.dash_max

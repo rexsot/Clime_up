@@ -5,9 +5,11 @@ import server
 
 from player import Player
 from background_A1 import Background_A1
+from gem import Gem_full
 
 frame_time = 0.013
 background_A1 = None
+gem_full = None
 
 def collide(a, b):
     left_a, bottom_a, right_a, top_a = a.get_bb()
@@ -25,10 +27,19 @@ def enter():
     global background_A1
 
     background_A1 = Background_A1()
-    server.player = Player()
+    game_world.add_object(background_A1, 0) # 배경 오브젝트 추가
 
-    game_world.add_object(background_A1, 0) # 플레이어 오브젝트 추가
-    game_world.add_object(server.player, 0) # 플레이어 오브젝트 추가
+    server.player = Player()
+    game_world.add_object(server.player, 1) # 플레이어 오브젝트 추가
+
+    gem_full = Gem_full(300, 300)
+    #gem_list = [gem_full()]
+    #game_world.add_object(gem_list, 1) # 젬 오브젝트 추가
+    game_world.add_object(gem_full, 1) # 젬 오브젝트 추가
+
+
+    #game_world.add_collision_pairs(server.player, gem_list, 'player:gem_full')
+    game_world.add_collision_pairs(server.player, gem_full, 'player:gem_full')
 
 
 # 종료
