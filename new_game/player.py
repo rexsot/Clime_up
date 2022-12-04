@@ -1,7 +1,11 @@
 #import game_framework
 from pico2d import *
+
+import game_framework
 import game_world
+import plat_iron
 from dash_effect import Dash_effect
+from plat_iron import col_left, col_down, col_right, col_up
 
 frame_time = 0.014
 
@@ -26,7 +30,7 @@ def dir_judg(x, y): # 대시가 대각인지 아닌지 판별
 # 1. 이벤트 정의 - KD = KEY_DOWN, KU = KEY_UP
 
 RIGHT_KD, LEFT_KD, UP_KD, DOWN_KD, X_KD, SPACE_KD, \
-RIGHT_KU, LEFT_KU, UP_KU, DOWN_KU, SPACE_KU, ENTER_DASH, ENTER_MOVE = range(13)
+RIGHT_KU, LEFT_KU, UP_KU, DOWN_KU, SPACE_KU, ENTER_DASH, ENTER_MOVE, ENTER_DIE = range(14)
 
 # ENTER_MOVE, COLL_TIMER, DIE_TIMER - 대시 시간, 대시 충돌 시간, 사망시간
 # ENTER_MOVE: DASH_STATE -> MOVE_STATE
@@ -189,20 +193,26 @@ class MOVE_STATE:
         player.loc_y += player.vel_y * frame_time #tick * game_framework.frame_time   # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
         player.vel_y += player.acc_y #60 * game_framework.frame_time#* tick  # 프레임당 가속도
 
-        # 60 기준으로 만들어진 코드. 300프레임일 때 5배를 곱해야 한다.
-        # ? 그럼 어케함?
-        # 1/game_framework.frame_time  = 현재 프레임
-        # 현재 프레임 / 60을 곱한다
+        if player.loc_y < -50:
+            player.add_event(ENTER_DIE) # 사망
+            player.sound_die.play(1)  # 사망 획득 소리 출력
 
-        if player.loc_y > 150:  # 체공판별(임시)
+        if player.loc_x < 510:
+            if player.loc_y > 500:  # 체공판별(임시)
+                player.midair = 1
+
+            if player.loc_y == 500:
+                player.dash_count = player.dash_max  # 대시 충전
+
+
+            if player.loc_y < 500:  # 접지시
+                player.loc_y = 500
+                player.vel_y = 0
+                player.acc_y = 0
+                player.midair = 0
+                player.dash_count = player.dash_max  # 대시 충전
+        else:
             player.midair = 1
-
-        elif player.loc_y < 150:  # 접지시
-            player.loc_y = 150
-            player.vel_y = 0
-            player.acc_y = 0
-            player.midair = 0
-            player.dash_count = player.dash_max  # 대시 충전
 
         if player.jump_time < 12 and player.press_space == 1:  # 점프 직후 점프키 홀딩시, 12프레임까지 가속도 감소 없음 < 0.2
             player.jump_time += 1 #game_framework.frame_time
@@ -254,7 +264,6 @@ class DASH_STATE:
 
         elif event == SPACE_KU: # 점프 해제
             player.press_space = 0
-            player.jump_time = 30
 
     def exit(player, event):
         pass
@@ -272,6 +281,10 @@ class DASH_STATE:
 
 
         player.dash_timer += 1 # 대시 시간
+        if player.loc_x < 510:
+            if player.loc_y < 500:  # 접지시
+                player.loc_y = 500
+
         if player.dash_timer == 10: # 방향키 입력 및 속력 관련 문제로 이곳에서 실질적인 exit를 담당한다.
 
             if player.dash_dir_a == 2:  # 대각 방향 대시
@@ -289,26 +302,75 @@ class DASH_STATE:
 
     def draw(player):
         player.image.clip_draw(230 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y)
-        #player.image.clip_draw(414 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y) # dash_effect
-        #player.image.clip_draw(598 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y) # dead
 
 # 대시 충돌 상태
 #class DASH_COL_STATE:
 
 # 사망 상태
-#class DIE_STATE
+class DIE_STATE:
+    def enter(player, event):
+        if event == RIGHT_KD:  # 우 입력
+            player.dir_x += 1
+        elif event == RIGHT_KU:  # 우 해제
+            player.dir_x -= 1
+
+        if event == LEFT_KD:  # 좌 입력
+            player.dir_x -= 1
+        elif event == LEFT_KU:  # 좌 해제
+            player.dir_x += 1
+
+        if event == UP_KD:  # 상 입력
+            player.dir_y += 1
+        elif event == UP_KU:  # 상 해제
+            player.dir_y -= 1
+
+        if event == DOWN_KD:  # 하 입력
+            player.dir_y -= 1
+        elif event == DOWN_KU:  # 하 해제
+            player.dir_y += 1
+
+        if event == SPACE_KD:  # 점프 입력
+            player.press_space = 1
+        elif event == SPACE_KU:  # 점프 해제
+            player.press_space = 0
+
+    def exit(player, event):
+        pass
+    def do(player):
+
+        player.die_timer -= 1
+        if player.die_acc > 0:
+            player.die_acc -= 2
+        player.loc_x -= player.die_acc * player.face_dir  # 뒤로 날아간다.
+
+        if player.die_timer == 0:
+            player.add_event(ENTER_MOVE) # 사망 상태 종료
+            player.loc_x, player.loc_y = player.start_x, player.start_y # x,y 위치
+
+            player.die_timer = 60
+            player.die_acc = 40
+
+    def draw(player):
+        if player.die_timer > 25:
+            player.image.clip_draw(598 - player.face_dir * 46, 200, 92, 100, player.loc_x, player.loc_y) # dead
+
 
 # 조건부로 진입해야함. lec12 boy파일의 timer를 응용해서 구현해보자
 next_state_table = {
     MOVE_STATE:  {
         RIGHT_KD: MOVE_STATE,  LEFT_KD: MOVE_STATE,  UP_KD: MOVE_STATE,  DOWN_KD: MOVE_STATE, SPACE_KD: MOVE_STATE,
         RIGHT_KU: MOVE_STATE,  LEFT_KU: MOVE_STATE,  UP_KU: MOVE_STATE,  DOWN_KU: MOVE_STATE, SPACE_KU: MOVE_STATE,
-        X_KD: MOVE_STATE, ENTER_DASH: DASH_STATE
+        X_KD: MOVE_STATE, ENTER_DASH: DASH_STATE, ENTER_DIE: DIE_STATE
         },
     DASH_STATE:   {
         RIGHT_KD: DASH_STATE,  LEFT_KD: DASH_STATE,  UP_KD: DASH_STATE,  DOWN_KD: DASH_STATE, SPACE_KD: DASH_STATE,
         RIGHT_KU: DASH_STATE,  LEFT_KU: DASH_STATE,  UP_KU: DASH_STATE,  DOWN_KU: DASH_STATE, SPACE_KU: DASH_STATE,
-        X_KD: DASH_STATE, ENTER_MOVE: MOVE_STATE}
+        X_KD: DASH_STATE, ENTER_MOVE: MOVE_STATE, ENTER_DASH: DASH_STATE, ENTER_DIE: DIE_STATE},
+    DIE_STATE: {
+        RIGHT_KD: DIE_STATE, LEFT_KD: DIE_STATE, UP_KD: DIE_STATE, DOWN_KD: DIE_STATE, SPACE_KD: DIE_STATE,
+        RIGHT_KU: DIE_STATE, LEFT_KU: DIE_STATE, UP_KU: DIE_STATE, DOWN_KU: DIE_STATE, SPACE_KU: DIE_STATE,
+        X_KD: DIE_STATE, ENTER_MOVE: MOVE_STATE, ENTER_DASH: DIE_STATE, ENTER_DIE: DIE_STATE
+    }
 }
 
 class Player:
@@ -317,7 +379,9 @@ class Player:
         # 기초 함수
 
         # 운동 함수
-        self.loc_x, self.loc_y = 200, 150 # x,y 위치
+        self.start_x, self.start_y = 200, 500
+
+        self.loc_x, self.loc_y = self.start_x, self.start_y # x,y 위치
         self.vel_x, self.vel_y = 0, 0 # x,y 속도
         self.acc_x, self.acc_y = 0, 0 # x,y 가속도
 
@@ -340,7 +404,9 @@ class Player:
         # 시간 함수
         self.dash_timer = 0 # 대시 시간
         self.jump_time = 0 # 점프 시간
-        self.timer = 1000  # 타이머
+        self.die_timer = 60
+        self.die_acc = 40
+
 
         # 이미지
         self.image = load_image('image/animation_sheet.png')
@@ -353,7 +419,7 @@ class Player:
         self.sound_die = load_wav('sound/player_die.wav')
 
         self.sound_dash.set_volume(32)
-        self.sound_die.set_volume(32)
+        self.sound_die.set_volume(10)
 
         # 이벤트 함수
         self.event_que = []
@@ -371,6 +437,8 @@ class Player:
 
     def update(self):
         self.cur_state.do(self)
+        self.loc_x = clamp(30, self.loc_x, game_framework.X_MAX - 30) # X값 제한
+        #self.loc_y = clamp(151, self.loc_y, game_framework.Y_MAX + 100) # Y값 제한(한계 높이만)
 
         if self.event_que:
             event = self.event_que.pop()
@@ -380,9 +448,9 @@ class Player:
 
 
     def draw(self):
-        self.cur_state.draw(self)
+        self.cur_state.draw(self) # 현재 상태 그리기
         self.font.draw(self.loc_x - 90, self.loc_y + 55, '%5d' % self.dash_count, (255, 255, 255)) # 남은 대시수 표기(항상)
-        draw_rectangle(*self.get_bb())
+        draw_rectangle(*self.get_bb()) # 판정
 
     def handle_event(self, event):
         if (event.type, event.key) in key_event_table:
@@ -395,5 +463,78 @@ class Player:
 
 
     def handle_collision(self, other, group):
-        if 'player:gem_full' == group:
+        if 'player:gem_full' == group: # 점프 젬 획득시
             self.dash_count = self.dash_max
+            #self.dash_count = self.dash_max
+
+        if 'player:spike' == group:
+            self.loc_x -= 100 * self.face_dir  # 뒤로 날아간다.
+            self.add_event(ENTER_DIE) # 사망
+            self.sound_die.play(1)  # 사망 획득 소리 출력
+
+        if 'player:plat_iron' == group: # 지형 충돌시
+            if self.cur_state == MOVE_STATE: # 이동 상태일 때 충돌시
+
+                # if self.vel_y < 0:  # 하강중 충돌시(접지)
+                #     if self.loc_y < plat_iron.col_up + 51:  # 바닥에 붙기
+                #         self.loc_y = plat_iron.col_up + 51  # 바닥에 붙기
+                #         self.midair = 0 # 접지
+                #         self.dash_count = self.dash_max  # 대시 충전
+                #
+                #     if self.vel_y < 0:
+                #         self.vel_y = 0 # 속도 초기화
+                #         if self.acc_y < 0:
+                #             self.acc_y = 0 # 가속도 초기화
+                    # if self.acc_y < 0:
+                    #     self.acc_y = 0
+                #grav_timer
+                # 꼭지점을 이용하면?
+                # player.x가 col_up과 col_down의 평군값 위에 있는지 아래에 있는지에 따라?
+                # 더 적게 파고든 쪽을 올려준다.
+                # x가 -10만큼 침범, y가 100만큼 침범
+                # 충돌이 일어났을 경우, 방향을 구하고, 방향에 따른 x,y의 침범값을 구한다.
+                # 그후, 침범값중 더 적은 방향으로 밀어낸다.
+                # 접지는...
+
+                # if self.vel_y > 0: # 상승중 충돌시(머리 박기)
+                #     if self.loc_y < plat_iron.col_down - 40: # 천장에 붙게
+                #         self.loc_y = plat_iron.col_down - 41 # 천장에 붙게
+                #         if self.vel_y > 0:
+                #             self.vel_y = 0 # 속도 초기화
+                #             self.jump_time = 30 # 점프 무중력 해제
+                #             if self.acc_y > 0:
+                #                 self.acc_y = 0 # 가속도 초기화
+                
+                if self.vel_x > 0: # 우측 이동중 충돌시
+                    if self.loc_x > plat_iron.col_left - 30: # 좌측 벽에 붙게
+                        self.loc_x = plat_iron.col_left - 31 # 좌측 벽에 붙게
+                        if self.vel_x > 0:
+                            self.vel_x = 0  # 속도 초기화
+                            if self.acc_x > 0:
+                                self.acc_x = 0  # 가속도 초기화
+                        
+                if self.vel_x < 0: # 좌측 이동중 충돌시
+                    if self.loc_x < plat_iron.col_right + 30: # 우측 벽에 붙게
+                        self.loc_x = plat_iron.col_right + 31
+                        if self.vel_x < 0:
+                            self.vel_x = 0  # 속도 초기화
+                            if self.acc_x < 0:
+                                self.acc_x = 0  # 가속도 초기화
+
+            elif self.cur_state == DASH_STATE: # 대시 상태일 때 충돌시
+
+                if self.dash_dir_x > 0:  # 우측 이동중 충돌시
+                    if self.loc_x > plat_iron.col_left - 30:  # 좌측 벽에 붙게
+                        self.loc_x = plat_iron.col_left - 31  # 좌측 벽에 붙게
+                        if self.vel_x > 0:
+                            self.vel_x = 0  # 속도 초기화
+                            if self.acc_x > 0:
+                                self.acc_x = 0  # 가속도 초기화
+
+                if self.dash_dir_x < 0:  # 좌측 이동중 충돌시
+                    if self.loc_x < plat_iron.col_right + 30:  # 우측 벽에 붙게
+                        self.loc_x = plat_iron.col_right + 31
+                        if self.vel_x < 0:
+                            self.vel_x = 0  # 속도 초기화
+                            if self.acc_x < 0:
+                                self.acc_x = 0  # 가속도 초기화

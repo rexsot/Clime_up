@@ -1,5 +1,4 @@
 from pico2d import *
-from player import Player
 import game_world
 import server
 
@@ -23,6 +22,7 @@ class Gem_full:
         gem_empty = Gem_empty(self.x, self.y) # 현 위치에
         game_world.add_object(gem_empty, 1) # gem_empty 생성
         gem_empty.sound_touch.play(1)  # 젬 소멸 소리 출력
+
 
     def get_bb(self):
         return self.x - 30, self.y - 30, self.x + 30, self.y + 30
