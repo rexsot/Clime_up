@@ -450,7 +450,7 @@ class Player:
     def draw(self):
         self.cur_state.draw(self) # 현재 상태 그리기
         self.font.draw(self.loc_x - 90, self.loc_y + 55, '%5d' % self.dash_count, (255, 255, 255)) # 남은 대시수 표기(항상)
-        draw_rectangle(*self.get_bb()) # 판정
+        #draw_rectangle(*self.get_bb()) # 판정
 
     def handle_event(self, event):
         if (event.type, event.key) in key_event_table:
