@@ -1,180 +1,189 @@
 from pico2d import *
 import game_framework
+import game_world
+import server
+
+from player import Player
+from background_A1 import Background_A1
+from gem import Gem_full
+from plat_iron import Plat_iron
+from strawberry import Strawberry_red, Strawberry_gold
+from spike import Spike
 
 frame_time = 0.013
-#dash_time = 0
+background_A1 = None
 
-def sig(a, b): # 두 수가 같다면 1리턴, 아니라면 -1 리턴
-    if a > 0 and b >= 0:
-        return 1
-    if a < 0 and b <= 0:
-        return 1
-    return -1
+gem_data = [
+    {'x': 1530, 'y': 260},
+    {'x': 600, 'y': 230},
+    {'x': 700, 'y': 550}
+]
 
+plat_iron_data = [ # dir = -1일때 가로, dir = 1일때 세로
+    {'x': 120, 'y': 419, 'dir': -1},
+    {'x': 360, 'y': 419, 'dir': -1},
 
-def vec(a): # 양수면 1, 음수면 -1, 0은 0리턴
-    if a > 0:
-        return 1
-    if a < 0:
-        return -1
-    return 0
+    {'x': 1800, 'y': 419, 'dir': -1},
+    {'x': 2040, 'y': 419, 'dir': -1},
 
-
-class Player:
-    def __init__(self):
-        self.loc_x, self.loc_y = 200, 150 # 위치
-        self.vel_x, self.vel_y = 0, 0 # 속도
-        self.acc_x, self.acc_y = 0, 0 # 가속도
-        self.dir_x, self.dir_y = 0, 0  # 방향키의 방향
-        self.press_space, self.jump_time = 0, 0
-
-        self.face_dir = 1 # 보고 있는 방향 - 좌 = -1, 우 = 1
-        self.midair = 0 # 0일때 접지, 1일때 체공
-        self.frame = 0 # 프레임 수
-
-        self.image = load_image('animation_sheet.png')
-
-    def update(self):
-        self.frame = (self.frame + 1) % 20 # 프레임 계산
-
-        if self.dir_x > 0: # 방향 판별 - vel_x로 변경해야함
-            self.face_dir = 1
-        if self.dir_x < 0:
-            self.face_dir = -1
-
-        # if (0 < self.loc_x + self.dir_x * 9 and self.loc_x + self.dir_x * 9 < X_MAX): # x좌표 제한
-        #     self.loc_x += self.dir_x * 9 # x축 이동
-
-        # 속도의 방향(vel_x)과 키의 방향(dir_x)이 일치할 때 덜 감속하고, 불일치할 때(방향키가 중립일 때 포함) 더 감속한다.
-
-        # X 계산
-        # 방향, 속도, 접지 여부
-
-        s = sig(self.dir_x, self.vel_x)
-
-        if self.dir_x == 0: # 방향키 중립
-            if abs(self.vel_x) <= 97.5: # 최소 속도 - 정지
-                self.vel_x = 0
-                self.acc_x = 0
-
-            else: # 최소 속도 - 이상
-                if 810 < abs(self.vel_x) and self.midair == 0: # 속도 810 이상, 접지
-                    self.acc_x = vec(self.vel_x) * -150
-                else: # 그외
-                    self.acc_x = vec(self.vel_x) * -97.5
-
-        else: # 방향키 비중립
-            if abs(self.vel_x) < 810: # 속도가 810 미만
-                self.acc_x = self.dir_x * 97.5
-            else: # 속도가 810 이상
-                if self.midair == 0: # 접지
-                    self.acc_x = vec(self.vel_x) * -(135 - s * 45)  # 이동방향이 같다면 -60, 다르다면 -150
-                else:  # 체공
-                    self.acc_x = vec(self.vel_x) * -(68.75 - s * 28.75)  # 이동방향이 같다면 -40, 다르다면 -97.5
-
-                #self.acc_x = vec(self.vel_x) * 97.5 * -s # 이동방향이 같다면 감속, 아니라면 가속
-                #self.acc_x = self.dir_x * -97.5 * s # 추가 감속
-
-        self.loc_x += self.vel_x * frame_time  # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
-        self.vel_x += self.acc_x  # 프레임당 가속도
-
-        #dir_x가 입력된 방향, face_dir은 마지막으로 입력된 dir_x, vel_x가 x축 속력
-
-        # Y 계산
-
-        if self.vel_y > 945: # 상승 종단속도
-            self.vel_y = 945
-
-        if self.vel_y < -1440: # 하강 종단속도
-            self.vel_y = -1440
-
-        self.loc_y += self.vel_y * frame_time # 프레임당 속도(player.update가 초당 프레임 수만큼 실행되므로, 역산해서 더한다.)
-        self.vel_y += self.acc_y # 프레임당 가속도
-
-        if self.loc_y > 150: # 체공판별(임시)
-            self.midair = 1
-        elif self.loc_y < 150: # 접지
-            self.loc_y = 150
-            self.vel_y = 0
-            self.acc_y = 0
-            self.midair = 0
-
-        if self.jump_time < 12 and self.press_space == 1: #점프 직후 점프키 홀딩시, 12프레임까지 가속도 감소 없음
-            self.jump_time += 1
-            #print(jump_time)
-            self.acc_y = 0
-
-        elif self.midair == 1: #체공시
-            if -405 < self.vel_y < 405 and self.press_space == 1: # 최고점 근처에서 점프키 홀딩(감속 하강)
-                self.acc_y = -67.5 #중력 반감
-            else:
-                self.acc_y = -135 # 기본중력
-
-    def draw(self): # 캐릭터 모션 출력
-        if self.midair == 0:  # 접지시
-            if self.dir_x == 0:  # 접지-정지
-                self.image.clip_draw(46 - self.face_dir * 46, 200, 92, 100, self.loc_x, self.loc_y)
-            else:  # 접지-이동
-                self.image.clip_draw(self.frame * 92, 50 + self.face_dir * 50, 92, 100, self.loc_x, self.loc_y)
-        else:  # 체공
-            self.image.clip_draw(240 - self.face_dir * 46, 200, 92, 100, self.loc_x, self.loc_y)
+    {'x': 450, 'y': 269, 'dir': 1},
+    {'x': 450, 'y': 29, 'dir': 1},
 
 
-def handle_events():
+    {'x': 1710, 'y': 20, 'dir': 1}
 
-    events = get_events()
-    for event in events:
-        if event.type == SDL_QUIT: # 창닫기
-            game_framework.quit()
+]
 
-        elif event.type == SDL_KEYDOWN: # 키 누를때
-            if event.key == SDLK_ESCAPE: # esc
-                game_framework.quit() #game_framework.change_state(logo_state)
-            #if event.key == SDLK_x:  # x(대시)
-            if event.key == SDLK_RIGHT: # 우
-                player.dir_x += 1
-            if event.key == SDLK_LEFT:  # 좌
-                player.dir_x -= 1
-            if event.key == SDLK_SPACE: # 스페이스 바 입력
-                player.press_space = 1
-                if player.midair == 0:  #접지중 점프시
-                    player.jump_time = 0
-                    player.acc_y = 945
-                    player.vel_x += player.dir_x * 360 # 이동하며 점프시 40(360)의 가속을 받는다.
+strawberry_red_data = [
+    {'x': 1300, 'y': 1000},
+    {'x': 1830, 'y': 260}
+]
 
-        elif event.type == SDL_KEYUP: #키 땔때
-            if event.key == SDLK_RIGHT:
-                player.dir_x -= 1
-            elif event.key == SDLK_LEFT:
-                player.dir_x += 1
-            if event.key == SDLK_SPACE: # 스페이스바가 때질 때
-                player.press_space = 0
+strawberry_gold_data = [
+    {'x': 1000, 'y': 50}
+]
 
-player = None
-running = True
+spike_data = [ # 상하좌우 -1234
 
+    {'x': 1300, 'y': 420, 'dir': 1},
+    {'x': 1300, 'y': 460, 'dir': 2},
+
+    {'x': 1710, 'y': 364, 'dir': 1},
+
+    {'x': 1100, 'y': 320, 'dir': 1},
+    {'x': 1100, 'y': 360, 'dir': 2},
+
+    {'x': 1100, 'y': 220, 'dir': 1},
+    {'x': 1100, 'y': 260, 'dir': 2},
+
+    {'x': 1100, 'y': 20, 'dir': 1},
+    {'x': 1100, 'y': 60, 'dir': 2},
+
+    {'x': 1100, 'y': 120, 'dir': 1},
+    {'x': 1100, 'y': 160, 'dir': 2},
+
+    {'x': 1000, 'y': 120, 'dir': 1},
+    {'x': 1000, 'y': 160, 'dir': 2},
+
+    {'x': 900, 'y': 120, 'dir': 1},
+    {'x': 900, 'y': 160, 'dir': 2},
+
+    {'x': 800, 'y': 120, 'dir': 1},
+    {'x': 800, 'y': 160, 'dir': 2},
+
+    {'x': 700, 'y': 120, 'dir': 1},
+    {'x': 700, 'y': 160, 'dir': 2},
+
+
+    {'x': 900, 'y': 390, 'dir': 1},
+    {'x': 900, 'y': 430, 'dir': 2},
+
+    {'x': 800, 'y': 390, 'dir': 1},
+    {'x': 800, 'y': 430, 'dir': 2},
+
+    {'x': 700, 'y': 390, 'dir': 1},
+    {'x': 700, 'y': 430, 'dir': 2},
+
+    {'x': 600, 'y': 390, 'dir': 1},
+    {'x': 600, 'y': 430, 'dir': 2},
+
+
+
+    {'x': 1710, 'y': 164, 'dir': 2},
+
+    {'x': 504, 'y': 419, 'dir': 3},
+    {'x': 504, 'y': 359, 'dir': 3},
+    {'x': 504, 'y': 299, 'dir': 3},
+    {'x': 504, 'y': 239, 'dir': 3},
+    {'x': 504, 'y': 179, 'dir': 3},
+    {'x': 504, 'y': 119, 'dir': 3},
+    {'x': 504, 'y': 59, 'dir': 3},
+    {'x': 504, 'y': -1, 'dir': 3}
+
+]
+
+
+# 초기화
 def enter():
-    global player, running
-    player = Player()
-    running = True
+    global background_A1
 
+    background_A1 = Background_A1()
+    game_world.add_object(background_A1, 0) # 배경 오브젝트 추가
+
+    server.player = Player()
+    game_world.add_object(server.player, 1) # 플레이어 오브젝트 추가
+
+    gems = [Gem_full(o['x'], o['y']) for o in gem_data]
+    game_world.add_objects(gems, 1)
+
+    plat_irons = [Plat_iron(o['x'], o['y'], o['dir']) for o in plat_iron_data]
+    game_world.add_objects(plat_irons, 1)
+
+    strawberrys_red = [Strawberry_red(o['x'], o['y']) for o in strawberry_red_data]
+    game_world.add_objects(strawberrys_red, 1)
+
+    strawberrys_gold = [Strawberry_gold(o['x'], o['y']) for o in strawberry_gold_data]
+    game_world.add_objects(strawberrys_gold, 1)
+
+    spikes = [Spike(o['x'], o['y'], o['dir']) for o in spike_data]
+    game_world.add_objects(spikes, 1)
+
+    game_world.add_collision_pairs(server.player, gems, 'player:gem_full')
+    game_world.add_collision_pairs(server.player, plat_irons, 'player:plat_iron')
+    game_world.add_collision_pairs(server.player, strawberrys_red, 'player:straw_red')
+    game_world.add_collision_pairs(server.player, strawberrys_gold, 'player:straw_gold')
+    game_world.add_collision_pairs(server.player, spikes, 'player:spike')
+
+
+# 종료
 def exit():
-    global player
-    del player
+    game_world.clear()
+
+def collide(a, b): # 맞닿을 시 충돌
+    left_a, bottom_a, right_a, top_a = a.get_bb()
+    left_b, bottom_b, right_b, top_b = b.get_bb()
+
+    if left_a > right_b: return False
+    if right_a < left_b: return False
+    if top_a < bottom_b: return False
+    if bottom_a > top_b: return False
+
+    return True
+
 
 def update():
-    player.update()
     delay(frame_time)
-    pass
+    for a, b, group in game_world.all_collision_pairs():
+        if collide(a, b): # == 1, == 2...로 구별가능
+            b.handle_collision(a, group)
+            a.handle_collision(b, group)
+
+    for game_object in game_world.all_objects():
+        game_object.update()
+
+
+def draw_world():
+    for game_object in game_world.all_objects():
+        game_object.draw()
 
 def draw():
     clear_canvas()
-    player.draw()
+    for game_object in game_world.all_objects():
+        game_object.draw()
     update_canvas()
-    pass
 
 def pause():
     pass
 
 def resume():
     pass
+
+def handle_events():
+    events = get_events()
+    for event in events:
+        if event.type == SDL_QUIT:
+            game_framework.quit()
+        elif (event.type, event.key) == (SDL_KEYDOWN, SDLK_ESCAPE):
+            game_framework.quit()
+        else:
+            server.player.handle_event(event)

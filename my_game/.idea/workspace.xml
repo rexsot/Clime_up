@@ -4,17 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d0b434a9-801f-43c2-ac68-979261b8313b" name="Changes" comment="Changes">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/play_state.py" beforeDir="false" afterPath="$PROJECT_DIR$/play_state.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../new_game/img/animation_sheet.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../new_game/img/background.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../new_game/img/plat_ice.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../new_game/img/plat_iron.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../new_game/mygame.py" beforeDir="false" afterPath="$PROJECT_DIR$/../new_game/mygame.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../new_game/plat_iron.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../new_game/play_state.py" beforeDir="false" afterPath="$PROJECT_DIR$/../new_game/play_state.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../new_game/player.py" beforeDir="false" afterPath="$PROJECT_DIR$/../new_game/player.py" afterDir="false" />
+    <list default="true" id="91ad306e-f6e2-4811-8931-070209c523fe" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/gem.py" beforeDir="false" afterPath="$PROJECT_DIR$/gem.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plat_iron.py" beforeDir="false" afterPath="$PROJECT_DIR$/plat_iron.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/player.py" beforeDir="false" afterPath="$PROJECT_DIR$/player.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spike.py" beforeDir="false" afterPath="$PROJECT_DIR$/spike.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/strawberry.py" beforeDir="false" afterPath="$PROJECT_DIR$/strawberry.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,8 +29,7 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectId" id="2HFfvTdxgURGdydq8Bi8HkCmXVH" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectId" id="2I4xq5gVqXbpHWIAdxTBGSDvHPJ" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -44,20 +38,18 @@
   "keyToString": {
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "last_opened_file_path": "G:/Git_My_Work/Clime_up/my_game",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+    "last_opened_file_path": "G:/Git_My_Work/2DGP/Labs/Lecture18_Sound_Packaging"
   }
 }]]></component>
   <component name="RunManager">
-    <configuration name="mygame" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
-      <module name="my_game" />
+    <configuration name="play_mygame" type="PythonConfigurationType" factoryName="Python">
+      <module name="new_game" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="C:\Python\python.exe" />
+      <option name="SDK_HOME" value="G:\Python\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
@@ -75,11 +67,11 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="d0b434a9-801f-43c2-ac68-979261b8313b" name="Changes" comment="" />
-      <created>1667885986133</created>
+      <changelist id="91ad306e-f6e2-4811-8931-070209c523fe" name="Changes" comment="" />
+      <created>1669454844301</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1667885986133</updated>
+      <updated>1669454844301</updated>
     </task>
     <servers />
   </component>
