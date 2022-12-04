@@ -22,6 +22,11 @@ def collide(a, b):
 
     return True
 
+gem_data = [
+  {'x': 500, 'y': 300},
+  {'x': 700, 'y': 500}
+]
+
 # 초기화
 def enter():
     global background_A1
@@ -32,14 +37,9 @@ def enter():
     server.player = Player()
     game_world.add_object(server.player, 1) # 플레이어 오브젝트 추가
 
-    gem_full = Gem_full(300, 300)
-    #gem_list = [gem_full()]
-    #game_world.add_object(gem_list, 1) # 젬 오브젝트 추가
-    game_world.add_object(gem_full, 1) # 젬 오브젝트 추가
-
-
-    #game_world.add_collision_pairs(server.player, gem_list, 'player:gem_full')
-    game_world.add_collision_pairs(server.player, gem_full, 'player:gem_full')
+    gems = [Gem_full(o['x'], o['y']) for o in gem_data]
+    game_world.add_objects(gems, 1)
+    game_world.add_collision_pairs(server.player, gems, 'player:gem_full')
 
 
 # 종료
@@ -53,7 +53,7 @@ def update():
 
     for a, b, group in game_world.all_collision_pairs():
         if collide(a, b):
-            print('COLLISION ', group)
+            #print('COLLISION ', group)
             a.handle_collision(b, group)
             b.handle_collision(a, group)
 
